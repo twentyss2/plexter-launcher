@@ -33,9 +33,11 @@ const DEFAULTS = {
 };
 
 // ── Load / save helpers ───────────────────────────────────────
+const SETTINGS_KEY = 'plexterSettings_v2'; // bumped to clear old eaglercraft.com URL
+
 function loadSettings() {
   try {
-    const raw = localStorage.getItem('plexterSettings');
+    const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return structuredClone(DEFAULTS);
     const saved = JSON.parse(raw);
     return {
@@ -49,7 +51,7 @@ function loadSettings() {
 }
 
 function saveSettings(s) {
-  localStorage.setItem('plexterSettings', JSON.stringify(s));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
 // ── Global state ──────────────────────────────────────────────
