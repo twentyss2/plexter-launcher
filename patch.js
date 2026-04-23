@@ -92,7 +92,104 @@
       var skip = document.getElementById('skipCountdown');
       if (skip) { skip.click(); }
     }
+
+    // Inject the persistent in-game HUD after a short delay
+    setTimeout(injectHUD, 800);
   };
+
+  // ── 6b. In-game HUD ───────────────────────────────────────────
+  function injectHUD() {
+    var hud = document.createElement('div');
+    hud.id = '_pxHUD';
+    hud.innerHTML = HUD_HTML;
+    document.body.appendChild(hud);
+    initHUD();
+  }
+
+  function initHUD() {
+    var btn      = document.getElementById('_px_hudBtn');
+    var panel    = document.getElementById('_px_hudPanel');
+    var closeBtn = document.getElementById('_px_hudClose');
+
+    btn.addEventListener('click', function() {
+      panel.classList.toggle('px-hud-open');
+      if (panel.classList.contains('px-hud-open')) hudPopulate();
+    });
+    closeBtn.addEventListener('click', function() {
+      panel.classList.remove('px-hud-open');
+    });
+
+    // Close on Esc
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') panel.classList.remove('px-hud-open');
+    });
+
+    // Save button inside HUD panel
+    document.getElementById('_px_hudSave').addEventListener('click', function() {
+      hudCollect();
+      saveSettings(settings);
+      panel.classList.remove('px-hud-open');
+    });
+
+    // Reset
+    document.getElementById('_px_hudReset').addEventListener('click', function() {
+      if (!confirm('Reset all settings to defaults?')) return;
+      settings = JSON.parse(JSON.stringify(DEFAULTS));
+      saveSettings(settings);
+      hudPopulate();
+    });
+
+    // Live slider labels
+    document.getElementById('_px_hrd').addEventListener('input',   function() { document.getElementById('_px_hrdVal').textContent  = this.value + ' chunks'; });
+    document.getElementById('_px_hfov').addEventListener('input',  function() { document.getElementById('_px_hfovVal').textContent  = this.value + '°'; });
+    document.getElementById('_px_hsens').addEventListener('input', function() { document.getElementById('_px_hsensVal').textContent = this.value + '%'; });
+
+    // Perf toggle
+    document.getElementById('_px_hperf').addEventListener('change', function() {
+      settings.perfMode = this.checked;
+      saveSettings(settings);
+    });
+
+    // Accent color
+    document.getElementById('_px_haccent').addEventListener('input', function() {
+      applyAccent(this.value);
+    });
+
+    // Keybind buttons in HUD
+    document.querySelectorAll('._px_hkbtn').forEach(function(btn2) {
+      btn2.addEventListener('click', function() { startListening(btn2); });
+    });
+  }
+
+  function hudPopulate() {
+    document.getElementById('_px_husername').value          = settings.username;
+    document.getElementById('_px_hserver').value            = settings.serverAddr;
+    document.getElementById('_px_hrd').value                = settings.renderDist;
+    document.getElementById('_px_hrdVal').textContent       = settings.renderDist + ' chunks';
+    document.getElementById('_px_hfov').value               = settings.fov;
+    document.getElementById('_px_hfovVal').textContent      = settings.fov + '°';
+    document.getElementById('_px_hsens').value              = settings.sensitivity;
+    document.getElementById('_px_hsensVal').textContent     = settings.sensitivity + '%';
+    document.getElementById('_px_hquality').value           = settings.quality;
+    document.getElementById('_px_hperf').checked            = settings.perfMode;
+    document.getElementById('_px_haccent').value            = settings.accentColor;
+    document.querySelectorAll('._px_hkbtn').forEach(function(b) {
+      b.textContent = settings.keybinds[b.dataset.action] || '?';
+    });
+  }
+
+  function hudCollect() {
+    settings.username    = document.getElementById('_px_husername').value.trim() || 'Steve';
+    settings.serverAddr  = document.getElementById('_px_hserver').value.trim();
+    settings.renderDist  = parseInt(document.getElementById('_px_hrd').value);
+    settings.fov         = parseInt(document.getElementById('_px_hfov').value);
+    settings.sensitivity = parseInt(document.getElementById('_px_hsens').value);
+    settings.quality     = document.getElementById('_px_hquality').value;
+    settings.accentColor = document.getElementById('_px_haccent').value;
+    document.querySelectorAll('._px_hkbtn').forEach(function(b) {
+      settings.keybinds[b.dataset.action] = b.textContent.trim();
+    });
+  }
 
   // ── 6. Inject launcher UI ─────────────────────────────────────
   function injectLauncher() {
@@ -424,7 +521,77 @@
     '._px_kbtn:hover{background:#1c231c}',
     '._px_kbtn.px-listening{border-color:var(--px-accent);background:var(--px-accent-glow);color:#e8f5e9;animation:px-pulse .8s ease infinite alternate}',
     '@keyframes px-pulse{from{opacity:.7}to{opacity:1}}',
-    '@media(max-width:700px){.px-art{display:none}.px-ctrl{width:100%;border-left:none;padding:24px 20px;justify-content:flex-start;padding-top:32px}.px-header{padding:14px 20px}.px-kgrid{grid-template-columns:1fr}input[type=range]{width:130px}}'
+    '@media(max-width:700px){.px-art{display:none}.px-ctrl{width:100%;border-left:none;padding:24px 20px;justify-content:flex-start;padding-top:32px}.px-header{padding:14px 20px}.px-kgrid{grid-template-columns:1fr}input[type=range]{width:130px}}',
+    // ── In-game HUD styles ──
+    '#_pxHUD{position:fixed;top:12px;left:12px;z-index:99999;font-family:Segoe UI,system-ui,sans-serif}',
+    '#_px_hudBtn{display:flex;align-items:center;gap:7px;padding:6px 13px;background:rgba(13,20,13,.75);border:1px solid rgba(76,175,80,.35);border-radius:8px;color:#e8f5e9;font-size:.8rem;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);transition:opacity .2s,background .2s,border-color .2s;opacity:.45;letter-spacing:.3px;user-select:none}',
+    '#_px_hudBtn:hover{opacity:1;background:rgba(13,20,13,.92);border-color:var(--px-accent)}',
+    '#_px_hudBtn .px-hico{font-size:1rem}',
+    '#_px_hudPanel{position:fixed;top:0;left:0;bottom:0;width:340px;background:#0f150f;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;transform:translateX(-110%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:99998;box-shadow:4px 0 32px rgba(0,0,0,.7)}',
+    '#_px_hudPanel.px-hud-open{transform:translateX(0)}',
+    '.px-hud-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.07)}',
+    '.px-hud-logo{font-size:1.1rem;font-weight:700;color:#e8f5e9}',
+    '.px-hud-logo span{color:var(--px-accent)}',
+    '.px-hud-close{background:none;border:none;color:#7a9e7e;font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px;transition:color .2s}',
+    '.px-hud-close:hover{color:#e8f5e9}',
+    '.px-hud-body{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:20px}',
+    '.px-hud-section{display:flex;flex-direction:column;gap:2px}',
+    '.px-hud-section h4{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:#7a9e7e;margin:0 0 10px}',
+    '.px-hud-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}',
+    '.px-hud-row:last-child{border-bottom:none}',
+    '.px-hud-row label{font-size:.82rem;color:#e8f5e9;display:flex;align-items:center;gap:6px;flex:1}',
+    '.px-hud-row input[type=text]{flex:1;padding:6px 10px;background:#1a221a;border:1px solid rgba(255,255,255,.07);border-radius:7px;color:#e8f5e9;font-size:.82rem;font-family:inherit;outline:none}',
+    '.px-hud-row input[type=text]:focus{border-color:var(--px-accent)}',
+    '.px-hud-row input[type=range]{width:120px}',
+    '.px-hud-row select{padding:5px 8px;background:#1a221a;border:1px solid rgba(255,255,255,.07);border-radius:7px;color:#e8f5e9;font-family:inherit;font-size:.82rem;cursor:pointer;outline:none}',
+    '.px-hud-row input[type=color]{width:36px;height:26px;border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:1px;background:#1a221a;cursor:pointer}',
+    '.px-hud-val{font-size:.75rem;color:var(--px-accent);font-weight:600;min-width:52px;text-align:right}',
+    '.px-hud-kgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px}',
+    '.px-hud-krow{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#1a221a;border:1px solid rgba(255,255,255,.06);border-radius:5px;gap:6px}',
+    '.px-hud-krow span{font-size:.75rem;color:#e8f5e9;flex:1}',
+    '._px_hkbtn{min-width:44px;padding:3px 6px;background:#0f150f;border:1px solid rgba(255,255,255,.07);border-radius:4px;color:var(--px-accent);font-family:inherit;font-size:.72rem;font-weight:600;cursor:pointer;text-align:center;text-transform:uppercase;transition:background .15s}',
+    '._px_hkbtn.px-listening{border-color:var(--px-accent);background:var(--px-accent-glow);color:#e8f5e9;animation:px-pulse .8s ease infinite alternate}',
+    '.px-hud-note{font-size:.7rem;color:#7a9e7e;padding:6px 0;line-height:1.4}',
+    '.px-hud-footer{display:flex;gap:8px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.07)}'
   ].join('');
+
+  // ── HUD HTML ──────────────────────────────────────────────────
+  var kbActions = ['forward:Forward','back:Back','left:Left','right:Right','jump:Jump','sneak:Sneak','sprint:Sprint','inventory:Inventory','drop:Drop','chat:Chat'];
+
+  var HUD_HTML =
+    '<button id="_px_hudBtn"><span class="px-hico">⛏</span> Plexter</button>'
+  + '<div id="_px_hudPanel">'
+  +   '<div class="px-hud-header">'
+  +     '<div class="px-hud-logo">⛏ Plexter<span>Launcher</span></div>'
+  +     '<button id="_px_hudClose" class="px-hud-close">&times;</button>'
+  +   '</div>'
+  +   '<div class="px-hud-body">'
+  +     '<div class="px-hud-section"><h4>Profile</h4>'
+  +       '<div class="px-hud-row"><label>Username</label><input type="text" id="_px_husername" maxlength="16" autocomplete="off"/></div>'
+  +       '<div class="px-hud-row"><label>Server</label><input type="text" id="_px_hserver" autocomplete="off" placeholder="wss://…"/></div>'
+  +       '<p class="px-hud-note">⚠ Profile changes take effect on next launch.</p>'
+  +     '</div>'
+  +     '<div class="px-hud-section"><h4>Video</h4>'
+  +       '<div class="px-hud-row"><label>Render Distance <span class="px-hud-val" id="_px_hrdVal"></span></label><input type="range" id="_px_hrd" min="2" max="16" step="1"/></div>'
+  +       '<div class="px-hud-row"><label>FOV <span class="px-hud-val" id="_px_hfovVal"></span></label><input type="range" id="_px_hfov" min="30" max="110" step="1"/></div>'
+  +       '<div class="px-hud-row"><label>Quality</label><select id="_px_hquality"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="ultra">Ultra</option></select></div>'
+  +       '<div class="px-hud-row"><label>Performance Mode</label><label class="px-toggle"><input type="checkbox" id="_px_hperf"><span class="px-slider"></span></label></div>'
+  +       '<p class="px-hud-note">⚠ Video changes take effect on next launch.</p>'
+  +     '</div>'
+  +     '<div class="px-hud-section"><h4>Controls</h4>'
+  +       '<div class="px-hud-row"><label>Mouse Sensitivity <span class="px-hud-val" id="_px_hsensVal"></span></label><input type="range" id="_px_hsens" min="1" max="200" step="1"/></div>'
+  +       '<div class="px-hud-kgrid">'
+  +         kbActions.map(function(s){var p=s.split(':');return '<div class="px-hud-krow"><span>'+p[1]+'</span><button class="_px_hkbtn" data-action="'+p[0]+'"></button></div>';}).join('')
+  +       '</div>'
+  +     '</div>'
+  +     '<div class="px-hud-section"><h4>Theme</h4>'
+  +       '<div class="px-hud-row"><label>Accent Color</label><input type="color" id="_px_haccent"/></div>'
+  +     '</div>'
+  +   '</div>'
+  +   '<div class="px-hud-footer">'
+  +     '<button id="_px_hudReset" class="px-btn px-btn-ghost" style="font-size:.8rem;padding:8px 12px">Reset</button>'
+  +     '<button id="_px_hudSave" class="px-btn px-btn-pri" style="flex:1;font-size:.85rem;padding:9px 14px">Save &amp; Close</button>'
+  +   '</div>'
+  + '</div>';
 
 })();
