@@ -191,13 +191,21 @@
           </div>
         </section>
 
-        <!-- ---- Game Source ---- -->
+        <!-- ---- Game File ---- -->
         <section class="settings-section">
-          <h3>Game Source</h3>
+          <h3>Game File</h3>
           <div class="field-group">
-            <label for="game-url">EaglercraftX URL</label>
-            <input id="game-url" type="text" placeholder="https://eaglercraft.com/mc/1.12.2/" />
-            <small>The URL of the EaglercraftX 1.12 WASM page to load in the iframe.</small>
+            <label for="game-url">Game Path / URL</label>
+            <input id="game-url" type="text" placeholder="game.html" />
+            <small>
+              Path to your EaglercraftX offline HTML file relative to this launcher,
+              or an absolute URL. Default: <code>game.html</code>.<br/><br/>
+              <strong>Setup:</strong> Download the
+              <a href="https://github.com/TwoMuchNerdo/1.12.2-WASM" target="_blank" rel="noopener">EaglercraftX 1.12 offline bundle</a>,
+              rename it <code>game.html</code>, place it next to <code>index.html</code> in your repo,
+              then add this line inside the <code>&lt;head&gt;</code> of game.html:<br/>
+              <code>&lt;script src="patch.js"&gt;&lt;/script&gt;</code>
+            </small>
           </div>
         </section>
 
@@ -217,28 +225,6 @@
         <button id="settings-save" class="btn btn-primary">Save Settings</button>
       </div>
     </div>
-  </div>
-
-  <!-- ===== GAME FRAME ===== -->
-  <div id="game-container" class="hidden">
-    <!-- Loading overlay shown while WASM boots -->
-    <div id="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-logo">⛏ Plexter<span class="accent">Launcher</span></div>
-        <p id="loading-status">Loading EaglercraftX…</p>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar" id="progress-bar"></div>
-        </div>
-        <small>This may take 10–30 seconds on first load.</small>
-      </div>
-    </div>
-    <button id="back-btn" class="back-btn" title="Return to Launcher">&#8592; Menu</button>
-    <iframe
-      id="game-frame"
-      title="EaglercraftX 1.12"
-      allowfullscreen
-      sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups"
-    ></iframe>
   </div>
 
   <script src="launcher.js"></script>
